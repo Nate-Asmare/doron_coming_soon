@@ -1,8 +1,45 @@
 import Head from "next/head";
-import Image from "next/image";
-import { Inter } from "next/font/google";
+
+import useInput from "@/hooks/useInput";
+import useHttp from "@/hooks/useHttp";
+
+import emailValidation from "@/util/emailValidation";
 
 export default function Home() {
+  const { sendRequest, isLoading } = useHttp();
+
+  const {
+    value: email,
+    isValid: emailIsValid,
+    hasError: emailHasError,
+    valueChangeHandler: emailChangeHandler,
+    inputBlurHandler: emailBlurHandler,
+    reset: emailReset,
+  } = useInput(emailValidation);
+
+  const handleEmailSubmit = async () => {
+    if (!emailHasError) {
+      try {
+        const reqConfig = {
+          method: "POST",
+          url: "/backend/api",
+          data: {
+            email,
+          },
+        };
+
+        const response = await sendRequest(reqConfig);
+        if (response?.status === 200) {
+          //success message
+        } else if (response?.response.status === 422) {
+          //failure message
+        }
+      } catch (error) {
+        //Something went wrong page
+      }
+    }
+  };
+
   return (
     <>
       <Head>
@@ -19,16 +56,31 @@ export default function Home() {
           <h1 className="text-[38px] text-center lg:text-left lg:text-[84px] font-extrabold">
             Get Notified when we launch.
           </h1>
-          <div className="flex border-[1px] border-gray rounded-full border-red max-w-[700px] my-[30px]">
+          <div
+            className={`flex border-[1px] rounded-full border-red max-w-[700px] mt-[30px] mb-[20px] ${
+              emailHasError ? "border-secondary" : "border-gray"
+            }`}
+          >
             <input
+              value={email}
+              onChange={emailChangeHandler}
+              onBlur={emailBlurHandler}
               className="w-full h-[50px] lg:h-[70px] rounded-l-full focus:outline-0 pl-[30px] text-[20px]"
               placeholder="Enter your email"
               type="text"
             />
-            <button className="border-none border-black w-[200px] bg-secondary rounded-full text-white text-[20px] font-normal">
+            <button
+              onClick={handleEmailSubmit}
+              className="border-none border-black w-[200px] bg-secondary rounded-full text-white text-[20px] font-normal hover:bg-"
+            >
               Notify Me
             </button>
           </div>
+          {emailHasError && (
+            <span className="flex bg-secondary text-white rounded-full px-[30px] py-[5px]">
+              Invalid email format
+            </span>
+          )}
         </div>
         <div className="mt-[30px] lg:mt-[0px] w-[100%] h-[500px] lg:w-[40%] lg:h-full bg-rocket-launch bg-center bg-cover"></div>
       </main>
